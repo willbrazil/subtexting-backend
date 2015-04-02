@@ -1,8 +1,10 @@
 import json
-from app import app
+from app import app, db
 from flask import request, make_response, url_for
 import urllib.request as urllib2
 import urllib
+from .forms import SignupForm 
+from .models import User
 
 @app.route('/')
 def index():
@@ -68,3 +70,16 @@ def send_message():
 		return 'OK!'
 
 	return 'Error..'
+
+@app.route('/signup', methods=['POST'])
+def signup():
+	form = SignupForm()
+	if form.validate():
+		u = User()
+		u.username = form.username.data
+		u.password = form.password.data
+		db.session.add(u)
+		db.session.commit()
+
+		return 'OK'
+	return str(form.errors)
