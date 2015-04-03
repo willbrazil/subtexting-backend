@@ -10,8 +10,8 @@ class NewContactForm(Form):
 
 class SignupForm(Form):
 	username = StringField('username', validators=[DataRequired()])
-	password = StringField('password', validators=[DataRequired(), EqualTo('confirm', 'Passwords do not match.')])
-	confirm = StringField('confirm', validators=[DataRequired()])
+	#password = StringField('password', validators=[DataRequired(), EqualTo('confirm', 'Passwords do not match.')])
+	#confirm = StringField('confirm', validators=[DataRequired()])
 
 	def validate(self):
 		rv = Form.validate(self)

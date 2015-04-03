@@ -40,7 +40,7 @@ class TestCase(unittest.TestCase):
 		assert  rv.status_code == 401
 
 	def test_user_sign_up(self):
-		rv = self.app.post('/signup', data=dict(username='will', password='pass', confirm='pass'))
+		rv = self.app.post('/signup', data=dict(username='will'))
 		assert rv.status_code == 200
 		assert 'OK' in rv.data.decode('utf-8')
 
@@ -54,6 +54,12 @@ class TestCase(unittest.TestCase):
 		rv = self.app.post('/signup', data=dict(username=u.username, password='randompass', confirm='randompass'))
 		assert rv.status_code == 200
 		assert 'Username already taken' in rv.data.decode('utf-8')
+
+	def test_user_generate_password(self):
+		u = models.User()
+		password = u.generate_password()
+		assert type(password) is str
+		assert len(password) == 8
 
 if __name__ == '__main__':
 	unittest.main()	

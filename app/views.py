@@ -3,6 +3,7 @@ from app import app, db
 from flask import request, make_response, url_for
 import urllib.request as urllib2
 import urllib
+import urllib.parse
 from .forms import SignupForm 
 from .models import User
 
@@ -77,9 +78,20 @@ def signup():
 	if form.validate():
 		u = User()
 		u.username = form.username.data
-		u.password = form.password.data
+
+		password = u.generate_password()
+		u.password = password
 		db.session.add(u)
 		db.session.commit()
 
-		return 'OK'
+		if send_password_to_phone(5745142948, password):
+			return 'OK'
+
+		return 'ERROR'
 	return str(form.errors)
+
+def send_password_to_phone(number, password):
+	data = urllib.parse.urlencode({'number': number, 'message': "Your key is: %s" % password})	
+	print(data)
+	req = urllib.request.urlopen('http://textbelt.com/text', data.encode('utf-8'))
+	return True
