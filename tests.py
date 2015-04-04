@@ -40,7 +40,7 @@ class TestCase(unittest.TestCase):
 		assert  rv.status_code == 401
 
 	def test_user_sign_up(self):
-		rv = self.app.post('/signup', data=dict(username='will'))
+		rv = self.app.post('/signup', data=dict(username='will', phone='1111111111'))
 		assert rv.status_code == 200
 		assert 'OK' in rv.data.decode('utf-8')
 
@@ -51,7 +51,7 @@ class TestCase(unittest.TestCase):
 		db.session.add(u)
 		db.session.commit()
 
-		rv = self.app.post('/signup', data=dict(username=u.username, password='randompass', confirm='randompass'))
+		rv = self.app.post('/signup', data=dict(username=u.username, phone='1111111111'))
 		assert rv.status_code == 200
 		assert 'Username already taken' in rv.data.decode('utf-8')
 
@@ -60,6 +60,37 @@ class TestCase(unittest.TestCase):
 		password = u.generate_password()
 		assert type(password) is str
 		assert len(password) == 8
+
+	def test_verify_code(self):
+		u = models.User()
+		u.username = 'will'
+		u.password = 'verify_random'
+		db.session.add(u)
+		db.session.commit()
+		rv = self.app.post('/verify', data=dict(username='will', code='verify_random'))
+		assert rv.status_code == 200
+		assert 'OK' in rv.data.decode('utf-8')
+
+		rv = self.app.post('/verify', data=dict(username='will', code='not'))
+		assert rv.status_code == 200
+		assert 'INVALID' in rv.data.decode('utf-8')
+
+	def test_set_registration_id(self):
+		u = models.User()
+		u.username = 'will'
+		u.password = 'verify_random'
+		db.session.add(u)
+		db.session.commit()
+
+		rv = self.app.post('registration_id', data=dict(username='will', password='verify_random', registration_id='1234'))
+		assert rv.status_code == 200
+		assert 'OK' in rv.data.decode('utf-8')
+
+		new_user = models.User.query.filter_by(username='will').first()
+		assert new_user.registration_id == '1234'
+
+		rv = self.app.post('registration_id', data=dict(username='will', password='invalid_pass_verify_random', registration_id='1234'))
+		assert rv.status_code == 403
 
 if __name__ == '__main__':
 	unittest.main()	

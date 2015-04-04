@@ -6,6 +6,7 @@ import urllib
 import urllib.parse
 from .forms import SignupForm 
 from .models import User
+import config
 
 @app.route('/')
 def index():
@@ -78,17 +79,47 @@ def signup():
 	if form.validate():
 		u = User()
 		u.username = form.username.data
-
+		phone = form.phone.data
 		password = u.generate_password()
 		u.password = password
 		db.session.add(u)
 		db.session.commit()
 
-		if send_password_to_phone(5745142948, password):
+		if app.config['TESTING']:
+			return 'OK'
+
+		if send_password_to_phone(phone, password):
 			return 'OK'
 
 		return 'ERROR'
 	return str(form.errors)
+
+@app.route('/verify', methods=['POST'])
+def verify():
+	username = request.form['username'] 
+	code = request.form['code']
+	if code != None and username != None:
+		if User.query.filter_by(username=username, password=code).first() != None:
+			return 'OK'
+	return 'INVALID'
+
+#TODO: Return invalid response in case login fails.. add decorator for auth
+@app.route('/registration_id', methods=['POST'])
+def set_registration_id():
+	reg_id = request.form['registration_id']
+	username = request.form['username']
+	password = request.form['password']
+
+	u = User.query.filter_by(username=username, password=password).first()
+	if u != None:
+		u.registration_id = reg_id
+		db.session.commit()
+		return 'OK'
+
+	return make_response(url_for('index'), 403)
+
+
+
 
 def send_password_to_phone(number, password):
 	data = urllib.parse.urlencode({'number': number, 'message': "Your key is: %s" % password})	

@@ -10,6 +10,7 @@ class NewContactForm(Form):
 
 class SignupForm(Form):
 	username = StringField('username', validators=[DataRequired()])
+	phone = StringField('phone', validators=[DataRequired()])
 	#password = StringField('password', validators=[DataRequired(), EqualTo('confirm', 'Passwords do not match.')])
 	#confirm = StringField('confirm', validators=[DataRequired()])
 
@@ -19,6 +20,7 @@ class SignupForm(Form):
 			return False
 
 		user = User.query.filter_by(username=self.username.data).first()
+
 		if user == None:
 			return True
 
