@@ -3,7 +3,6 @@ from app import app, db
 from flask import request, make_response, url_for
 import urllib
 import urllib2
-import urlparse
 from .forms import SignupForm 
 from .models import User
 import config
@@ -122,7 +121,7 @@ def set_registration_id():
 
 
 def send_password_to_phone(number, password):
-	data = urlparse.urlencode({'number': number, 'message': "Your key is: %s" % password})	
+	data = urllib.urlencode({'number': number, 'message': "Your key is: %s" % password})	
 	print(data)
 	req = urllib.urlopen('http://textbelt.com/text', data.encode('utf-8'))
 	return True
