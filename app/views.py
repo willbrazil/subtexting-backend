@@ -6,6 +6,7 @@ import urllib2
 from .forms import SignupForm 
 from .models import User
 import config
+import os
 
 @app.route('/')
 def index():
