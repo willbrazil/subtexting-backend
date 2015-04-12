@@ -38,16 +38,18 @@ def send_message():
 
 	gcm_url = 'https://android.googleapis.com/gcm/send'
 
+	username = request.form['username']
 	to_local_id = request.form['to_local_id']
 	message_body = request.form['message_body']
 
 	headers = {
-			'Authorization': "API_KEY_GOES_HERE8",
+			'Authorization': "",
 			'Content-Type': 'application/json'
 		}
 
+	reg_id = User.query.filter_by(username=username).first().registration_id
 	body = {
-			"registration_ids" : ["DEVICE ID GOES HERE"],
+			"registration_ids" : [reg_id],
 			"data" : {
 				"command" : "send_message",
 				"local_id": to_local_id,
