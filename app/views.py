@@ -17,7 +17,7 @@ def index():
 def contacts():
 	try:
 		contact_list = json.loads(request.form['contact_list'])
-	except ValueError as e: 
+	except ValueError as e:
 		response = make_response(url_for('index'), 404)
 		return response
 	else:	
@@ -33,6 +33,7 @@ def get_contacts():
 	contact_list = {'contact_list': contact_list}
 	return json.dumps(contact_list)
 
+#todo: improve response so we can indicate errors better.
 @app.route('/send', methods=['POST'])
 def send_message():
 
@@ -42,35 +43,37 @@ def send_message():
 	to_local_id = request.form['to_local_id']
 	message_body = request.form['message_body']
 
-	headers = {
-			'Authorization': "",
-			'Content-Type': 'application/json'
-		}
+	api_key = os.environ.get('API_KEY')
+	if api_key != None:
+		headers = {
+				'Authorization': "key=%s" % api_key,
+				'Content-Type': 'application/json'
+			}
 
-	reg_id = User.query.filter_by(username=username).first().registration_id
-	body = {
-			"registration_ids" : [reg_id],
-			"data" : {
-				"command" : "send_message",
-				"local_id": to_local_id,
-				"body" : message_body
-			},
-		}
+		reg_id = User.query.filter_by(username=username).first().registration_id
+		body = {
+				"registration_ids" : [reg_id],
+				"data" : {
+					"command" : "send_message",
+					"local_id": to_local_id,
+					"body" : message_body
+				},
+			}
 
-	data = json.dumps(body)
-	data = data.encode('utf-8')
-	req = urllib2.Request(gcm_url, data, headers)
-	response = None
+		data = json.dumps(body)
+		data = data.encode('utf-8')
+		req = urllib2.Request(gcm_url, data, headers)
+		response = None
 
-	try:
-		urllib2.urlopen(req)
-	except urllib2.HTTPError as e:
-		return make_response(url_for('index'), e.code)
-	else:
-		return 'OK'
+		try:
+			urllib2.urlopen(req)
+		except urllib2.HTTPError as e:
+			return make_response(url_for('index'), e.code)
+		else:
+			return 'OK'
 
-	if response != None:
-		return 'OK!'
+		if response != None:
+			return 'OK!'
 
 	return 'Error..'
 
