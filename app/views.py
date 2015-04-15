@@ -2,7 +2,6 @@ import json
 from app import app, db
 from flask import request, make_response, url_for
 import urllib.request as urllib2
-import urllib
 import urllib.parse
 from .forms import SignupForm 
 from .models import User
