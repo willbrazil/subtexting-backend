@@ -76,7 +76,7 @@ def send_message():
 		if response != None:
 			return 'OK!'
 
-	return 'Error..'
+	return make_response(url_for('index'), 500)
 
 @app.route('/signup', methods=['POST'])
 def signup():
