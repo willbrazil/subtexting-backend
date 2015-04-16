@@ -1,6 +1,7 @@
 import os
 import unittest
 import json
+import base64
 
 from app import app, db, models
 from config import basedir
@@ -21,21 +22,38 @@ class TestCase(unittest.TestCase):
 		assert 'OK'	in rv.data.decode('utf-8')
 
 	def test_post_user_list_invalid_json(self):
+
+		u = models.User()
+		u.username = 'will'
+		u.password = 'password'
+		db.session.add(u)
+		db.session.commit()
+
 		invalid_list_json = '[{contact: }]'
-		rv = self.app.post('/contacts', data=dict(contact_list=invalid_list_json))
+		rv = self.app.post('/contacts', data=dict(contact_list=invalid_list_json), headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'password')).replace('\n', ''))})
 		assert rv.status_code == 404
 
 	def test_post_user_list(self):
+
+		u = models.User()
+		u.username = 'will'
+		u.password = 'password'
+		db.session.add(u)
+		db.session.commit()
+
 		contact_list = [{'name': 'Jess', 'local_id': 0 }, {'name': 'Giancarlo', 'local_id': 1}]
-		rv = self.app.post('/contacts', data=dict(contact_list= json.dumps(contact_list)))
-		print(rv.data)
+
+		rv = self.app.post('/contacts', data=dict(contact_list= json.dumps(contact_list)), headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'password')).replace('\n', ''))})
 		assert 'OK' in rv.data.decode('utf-8')
 
 	def test_get_contact_list_empty_db(self):
 		pass
 
+	def test_get_contact_list_no_login(self):
+		rv = self.app.get()
 
-	def test_post_user_list(self):
+
+	def test_send_msg_no_login(self):
 		rv = self.app.post('/send', data=dict(to_local_id=0, message_body="Hello, World!"))
 		assert  rv.status_code == 401
 
@@ -82,15 +100,15 @@ class TestCase(unittest.TestCase):
 		db.session.add(u)
 		db.session.commit()
 
-		rv = self.app.post('registration_id', data=dict(username='will', password='verify_random', registration_id='1234'))
+		rv = self.app.post('registration_id', data=dict(registration_id='1234'), headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'verify_random')).replace('\n', '')) })
 		assert rv.status_code == 200
 		assert 'OK' in rv.data.decode('utf-8')
 
 		new_user = models.User.query.filter_by(username='will').first()
 		assert new_user.registration_id == '1234'
 
-		rv = self.app.post('registration_id', data=dict(username='will', password='invalid_pass_verify_random', registration_id='1234'))
-		assert rv.status_code == 403
+		rv = self.app.post('registration_id', data=dict(registration_id='1234'), headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'verify_random_invalid')).replace('\n', '')) })
+		assert rv.status_code == 401
 
 if __name__ == '__main__':
 	unittest.main()	
