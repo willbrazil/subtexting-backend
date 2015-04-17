@@ -1,10 +1,10 @@
 import json
 from app import app, db
-from flask import request, make_response, url_for, g, Response
+from flask import request, make_response, url_for, g, Response, jsonify
 import urllib
 import urllib2
 from .forms import SignupForm 
-from .models import User
+from .models import User, Contact
 import config
 import os
 from functools import wraps 
@@ -35,31 +35,40 @@ def rest_login_required(f):
 
 @app.route('/')
 def index():
-	#messages = [{'from': 'Giancarlo', 'body' : 'Hello my friend!'}, {'from': 'Jess', 'body': 'What is up, love?'}]
-	#return json.dumps({'message_count': len(messages), 'messages': messages})
 	return 'OK'
-
-@app.route('/contacts', methods=['POST'])
-@rest_login_required
-def contacts():
-	try:
-		contact_list = json.loads(request.form['contact_list'])
-	except ValueError as e:
-		response = make_response(url_for('index'), 404)
-		return response
-	else:	
-		return 'OK'
 
 @app.route('/contacts', methods=['GET'])
 @rest_login_required
 def get_contacts():
-	contact_list = {
-	'Jess': 0,
-	'Giancarlo': 1
-	}
+	user = g.user
+	contact_list = {}
+	for c in user.contacts:
+		contact_list[c.local_id] = c.name
 
-	contact_list = {'contact_list': contact_list}
-	return json.dumps(contact_list)
+	return jsonify(contact_list)
+
+@app.route('/contacts', methods=['POST'])
+@rest_login_required
+def contacts():
+
+	user = g.user
+
+	try:
+		contact_list = json.loads(request.form['contact_list'])
+
+		for key in contact_list.keys():
+			c = Contact()
+			c.name = contact_list[key]
+			c.local_id = key
+			c.user_id = user.id
+			db.session.add(c)
+			db.session.commit()
+
+	except ValueError as e:
+		response = Response('Invalid json', 404)
+		return response
+	else:
+		return 'OK'
 
 #todo: improve response so we can indicate errors better.
 @app.route('/send', methods=['POST'])
