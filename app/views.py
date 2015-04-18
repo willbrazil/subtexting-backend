@@ -45,7 +45,7 @@ def get_contacts():
 	for c in user.contacts:
 		contact_list[c.local_id] = c.name
 
-	return jsonify(contact_list)
+	return jsonify({'contact_list': contact_list})
 
 @app.route('/contacts', methods=['POST'])
 @rest_login_required

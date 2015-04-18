@@ -40,7 +40,7 @@ class TestCase(unittest.TestCase):
 
     rv = self.app.get('/contacts', headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'pass')).replace('\n', '')) })
     assert rv.status_code == 200
-    contacts = json.loads(rv.data.decode('utf-8'))
+    contacts = json.loads(rv.data.decode('utf-8'))['contact_list']
     assert contacts['123'] == 'Jess'
 
   def test_upload_contact_list(self):
