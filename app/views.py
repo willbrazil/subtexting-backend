@@ -57,12 +57,13 @@ def contacts():
 		contact_list = json.loads(request.form['contact_list'])
 
 		for key in contact_list.keys():
-			c = Contact()
-			c.name = contact_list[key]
-			c.local_id = key
-			c.user_id = user.id
-			db.session.add(c)
-			db.session.commit()
+			if Contact.query.filter_by(local_id=key, user_id=user.id).first() is None:
+				c = Contact()
+				c.name = contact_list[key]
+				c.local_id = key
+				c.user_id = user.id
+				db.session.add(c)
+				db.session.commit()
 
 	except ValueError as e:
 		response = Response('Invalid json', 404)

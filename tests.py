@@ -60,6 +60,23 @@ class TestCase(unittest.TestCase):
     assert len(contacts) == 1
     assert contacts[0].name == 'Jess'
 
+  def test_upload_contact_list_duplicate_contact(self):
+    u = models.User()
+    u.username = 'will'
+    u.password = 'pass'
+    db.session.add(u)
+    db.session.commit()
+
+    contact_list = {'123': 'Jess', '123': 'Jess'}
+
+    rv = self.app.post('/contacts', data=dict(contact_list=json.dumps(contact_list)), headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'pass')).replace('\n', '')) })
+    assert rv.status_code == 200
+
+    user = models.User.query.filter_by(username='will').first()
+    contacts = models.Contact.query.filter_by(user_id=user.id).all()
+    assert len(contacts) == 1
+    assert contacts[0].name == 'Jess'
+
   def test_post_user_list_invalid_json(self):
     u = models.User()
     u.username = 'will'
