@@ -194,6 +194,10 @@ def get_messages():
 	for contact in user.contacts.all():
 		for message in contact.messages:
 			messages.append({'body': message.body, 'local_id': contact.local_id})
+			db.session.delete(message)
+			db.session.commit()
+
+
 
 	msg_json = json.dumps({'messages': messages})
 	return msg_json

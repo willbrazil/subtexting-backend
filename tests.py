@@ -193,12 +193,17 @@ class TestCase(unittest.TestCase):
     db.session.add(m)
     db.session.commit()
 
+    assert len(models.Contact.query.filter_by(local_id=123).first().messages.all()) == 1
+
     rv = self.app.get('/message', headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'pass')).replace('\n', '')) })
     messages = json.loads(rv.data.decode('utf-8'))['messages']
     assert rv.status_code == 200
     assert len(messages) == 1
     assert messages[0]['body'] == 'hello'
     assert messages[0]['local_id'] == 123
+
+    # Ensures message was deleted.
+    assert len(models.Contact.query.filter_by(local_id=123).first().messages.all()) == 0
 
 
 if __name__ == '__main__':
