@@ -146,5 +146,60 @@ class TestCase(unittest.TestCase):
     rv = self.app.post('/registration_id', data=dict(registration_id='1234'), headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'verify_random_invalid')).replace('\n', '')) })
     assert rv.status_code == 401
 
+  def test_add_message(self):
+    u = models.User()
+    u.username = 'will'
+    u.password = 'pass'
+    db.session.add(u)
+    db.session.commit()
+
+    c = models.Contact()
+    c.name = 'Jess'
+    c.local_id = 123
+    c.user_id = u.id
+    db.session.add(c)
+    db.session.commit()
+
+    data = dict(message_body='hello',local_id=123) # local_id != contact_id
+
+    rv = self.app.post('/message', data=data, headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'pass')).replace('\n', '')) })
+    assert rv.status_code == 200
+
+    msg = models.Message.query.first()
+    assert msg.body == 'hello'
+    assert msg.contact_id == models.Contact.query.filter_by(name='Jess').first().id
+
+    invalid_data = dict(message_body='hello',local_id=0)
+    rv = self.app.post('/message', data=invalid_data, headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'pass')).replace('\n', '')) })
+    assert rv.status_code == 400
+
+  def test_get_messages(self):
+    u = models.User()
+    u.username = 'will'
+    u.password = 'pass'
+    db.session.add(u)
+    db.session.commit()
+
+    c = models.Contact()
+    c.name = 'Jess'
+    c.local_id = 123
+    c.user_id = u.id
+    db.session.add(c)
+    db.session.commit()
+
+    m = models.Message()
+    m.body = 'hello'
+    m.contact_id = c.id
+    db.session.add(m)
+    db.session.commit()
+
+    rv = self.app.get('/message', headers={'Authorization': 'Basic %s' % (base64.encodestring('%s:%s' % ('will', 'pass')).replace('\n', '')) })
+    messages = json.loads(rv.data.decode('utf-8'))['messages']
+    assert rv.status_code == 200
+    assert len(messages) == 1
+    assert messages[0]['body'] == 'hello'
+    assert messages[0]['local_id'] == 123
+
+
 if __name__ == '__main__':
   unittest.main()

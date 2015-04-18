@@ -21,3 +21,9 @@ class Contact(db.Model):
 	name = db.Column(db.String)
 	local_id = db.Column(db.Integer)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+	messages = db.relationship('Message', backref='contact', lazy='dynamic')
+
+class Message(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	body = db.Column(db.String)
+	contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'))

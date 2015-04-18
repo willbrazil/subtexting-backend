@@ -4,7 +4,7 @@ from flask import request, make_response, url_for, g, Response, jsonify
 import urllib
 import urllib2
 from .forms import SignupForm 
-from .models import User, Contact
+from .models import User, Contact, Message
 import config
 import os
 from functools import wraps 
@@ -44,6 +44,8 @@ def get_contacts():
 	contact_list = {}
 	for c in user.contacts:
 		contact_list[c.local_id] = c.name
+
+	# remove contacts from db.
 
 	return jsonify({'contact_list': contact_list})
 
@@ -146,7 +148,6 @@ def verify():
 			return 'OK'
 	return 'INVALID'
 
-#TODO: Return invalid response in case login fails.. add decorator for auth
 @app.route('/registration_id', methods=['POST'])
 @rest_login_required
 def set_registration_id():
@@ -160,7 +161,42 @@ def set_registration_id():
 
 	return make_response(url_for('index'), 403)
 
+@app.route('/message', methods=['POST'])
+@rest_login_required
+def add_message():
+	user = g.user
 
+	body = request.form['message_body']
+	local_id = request.form['local_id']
+
+	contact = user.contacts.filter_by(local_id=local_id).first()
+
+	if contact is None:
+		return Response('Invalid Local Id for Contact.', 400)
+
+	contact_id = contact.id
+
+	msg = Message()
+	msg.body = body
+	msg.contact_id = contact_id
+
+	db.session.add(msg)
+	db.session.commit()
+
+	return 'OK'
+
+@app.route('/message', methods=['GET'])
+@rest_login_required
+def get_messages():
+	user = g.user
+
+	messages = []
+	for contact in user.contacts.all():
+		for message in contact.messages:
+			messages.append({'body': message.body, 'local_id': contact.local_id})
+
+	msg_json = json.dumps({'messages': messages})
+	return msg_json
 
 
 def send_password_to_phone(number, password):
@@ -168,4 +204,3 @@ def send_password_to_phone(number, password):
 	print(data)
 	req = urllib.urlopen('http://textbelt.com/text', data.encode('utf-8'))
 	return True
-			
