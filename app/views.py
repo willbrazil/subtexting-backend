@@ -44,8 +44,9 @@ def get_contacts():
 	contact_list = {}
 	for c in user.contacts:
 		contact_list[c.local_id] = c.name
+		db.session.delete(c)
 
-	# remove contacts from db.
+	db.session.commit()
 
 	return jsonify({'contact_list': contact_list})
 

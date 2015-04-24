@@ -43,6 +43,9 @@ class TestCase(unittest.TestCase):
     contacts = json.loads(rv.data.decode('utf-8'))['contact_list']
     assert contacts['123'] == 'Jess'
 
+    # Contacts should have been removed from db once pulled.
+    assert len(u.contacts.all()) == 0
+
   def test_upload_contact_list(self):
     u = models.User()
     u.username = 'will'
